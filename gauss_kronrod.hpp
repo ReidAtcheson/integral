@@ -18,7 +18,7 @@ class GKData{
   private:
     valarray<real_type> _gknodes = {-0.991455371120813,-0.949107912342759,-0.864864423359769,-0.741531185599394,-0.586087235467691,-0.405845151377397,-0.207784955007898,0.0,0.207784955007898,0.405845151377397,0.586087235467691,0.741531185599394,0.864864423359769,0.949107912342759,0.991455371120813};
     valarray<real_type> _kweights = {0.022935322010529,0.063092092629979,0.104790010322250,0.140653259715525,0.169004726639267,0.190350578064785,0.204432940075298,0.209482141084728,0.204432940075298,0.190350578064785,0.169004726639267,0.140653259715525,0.104790010322250,0.063092092629979,0.022935322010529};
-    valarray<real_type> _gweights = {0.129484966168870,0.279705391489277,0.381830050505119,0.417959183673469};
+    valarray<real_type> _gweights = {0.129484966168870,0.279705391489277,0.381830050505119,0.417959183673469,0.381830050505119,0.279705391489277,0.129484966168870};
 
   public:
     valarray<real_type> gknodes() {return  this->_gknodes ;};
@@ -41,29 +41,29 @@ class interval{
       this->endpoints[1]=right;
     }
     void gkquad(fn_type f,valarray<real_type> nodes, valarray<real_type> kweights,valarray<real_type> gweights){
+
       /*Map nodes from [-1,1] to [endpoints[0],endpoints[1]].*/
       auto a        = endpoints[0];
       auto b        = endpoints[1];
-      auto nds      = myapply(nodes,[a,b](real_type x)->{return (a-x)*0.5+(b+x)*0.5;});
+      auto nds      = myapply(nodes,[a,b](real_type x)->real_type {return (b-a)*0.5*x+(b+a)*0.5;});
+
+
       auto h        = b-a;
       /*Scale weights.*/
-      auto wts      = kweights*h/2.0;
-      auto gwts     = gweights*h/2.0;
+      valarray<real_type> wts      = kweights*h/2.0;
+      valarray<real_type> gwts     = gweights*h/2.0;
       /*Evaluate function at nodes.*/
       auto fx       = myapply<real_type,fn_type>(nds,f);
       /*Compute Kronrod quadrature.*/
       this->quadval = (fx*wts).sum();
 
       /*Calculate Gauss quadrature.*/
-      slice slc(1,15,2);
+      slice slc(1,7,2);
       valarray<real_type> slcfx = fx[slc];
-      int n=nds.size();
-      for(int i=0;i<n;i++)
-        cout <<endl<<nds[i]<<endl;
       auto gquadval = (slcfx*gwts).sum();
-      /*This error estimate is a little suspicious..*/
-      this->errval = 200.0*pow(abs(quadval-gquadval),1.5);
-    }
+      valarray<real_type> tmp      = slcfx*gwts;
+      this->errval = abs(gquadval-this->quadval)/(abs(this->quadval)+1e-6);
+   }
     real_type get_error(){
       return this->errval;
     }

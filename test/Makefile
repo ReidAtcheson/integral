@@ -1,8 +1,10 @@
 
+CPP := /Users/silentvoice/clang+llvm-3.6.2-x86_64-apple-darwin/bin/clang++
 
 
 ALL : test.cpp
-	g++ -g --std=c++14 test.cpp -o test
+	$(CPP) -g --std=c++14 test.cpp -o test
+	./test &> out
 
 
 .PHONY : clean
