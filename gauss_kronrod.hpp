@@ -30,21 +30,37 @@ class GKData{
 template <typename real_type, typename fn_type>
 class interval{
   private:
+    real_type left_endpoint;
+    real_type right_endpoint;
     real_type quadval;
     real_type errval;
   public:
-    array<real_type,2> endpoints;
+    interval(){
+    }
+    interval(const interval<real_type,fn_type>& i){
+      this->left_endpoint=i.left_endpoint;
+      this->right_endpoint=i.right_endpoint;
+      this->quadval=i.quadval;
+      this->errval=i.errval;
+    }
+ 
+    interval(interval<real_type,fn_type>& i){
+      this->left_endpoint=i.left_endpoint;
+      this->right_endpoint=i.right_endpoint;
+      this->quadval=i.quadval;
+      this->errval=i.errval;
+    }
     interval(real_type left, real_type right){
       this->quadval=0.0;
       this->errval =1.0;
-      this->endpoints[0]=left;
-      this->endpoints[1]=right;
+      this->left_endpoint=left;
+      this->right_endpoint=right;
     }
     void gkquad(fn_type f,valarray<real_type> nodes, valarray<real_type> kweights,valarray<real_type> gweights){
 
       /*Map nodes from [-1,1] to [endpoints[0],endpoints[1]].*/
-      auto a        = endpoints[0];
-      auto b        = endpoints[1];
+      auto a        = left();
+      auto b        = right();
       auto nds      = myapply(nodes,[a,b](real_type x)->real_type {return (b-a)*0.5*x+(b+a)*0.5;});
 
 
@@ -70,8 +86,8 @@ class interval{
     real_type get_quad(){
       return this->quadval;
     }
-    real_type left(){return this->endpoints[0];}
-    real_type right(){return this->endpoints[1];}
+    real_type left() const {return this->left_endpoint;}
+    real_type right()const {return this->right_endpoint;}
 
 
 
@@ -104,11 +120,14 @@ real_type gauss_kronrod(fn_type f,real_type reltol){
     auto tmp_intervals = intervals;
     for(auto ab : tmp_intervals){
       ab.gkquad(f,gknodes,kweights,gweights);
+      intervals.erase(ab);intervals.insert(ab);
       if(ab.get_error()>reltol){
         has_split=true;
         auto lp = ab.left(); 
         auto rp = ab.right();
         auto mp = (lp+rp)/2.0;
+        interval<real_type,fn_type> left_int(lp,mp);
+        interval<real_type,fn_type> right_int(mp,rp);
         intervals.insert(interval<real_type,fn_type>(lp,mp));
         intervals.insert(interval<real_type,fn_type>(mp,rp));
         intervals.erase(ab);
@@ -139,12 +158,8 @@ valarray<val_type> myapply(valarray<val_type> xs,fn_type f){
 
 template <typename real_type,typename fn_type>
 bool interval_lessthan(const interval<real_type,fn_type>& int1, const interval<real_type,fn_type>& int2){
-  return lexicographical_compare(int1.endpoints.begin(),
-      int1.endpoints.end(),
-      int2.endpoints.begin(),
-      int2.endpoints.end());
+  real_type e1[2]={int1.left(),int1.right()};
+  real_type e2[2]={int2.left(),int2.right()};
+  return lexicographical_compare(e1,e1+2,e2,e2+2);
 }
-
-
-
 #endif
