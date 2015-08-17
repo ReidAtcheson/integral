@@ -10,5 +10,6 @@ ALL : test.cpp
 
 
 clean :
-	rm -rf test
-	rm -rf test.dSYM
+	rm -rf ./test
+	rm -rf ./test.dSYM
+	rm -rf ./out

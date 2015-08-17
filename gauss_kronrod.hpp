@@ -123,6 +123,7 @@ real_type gauss_kronrod(fn_type f,real_type reltol){
       intervals.erase(ab);intervals.insert(ab);
       if(ab.get_error()>reltol){
         has_split=true;
+        /*Bisect interval.*/
         auto lp = ab.left(); 
         auto rp = ab.right();
         auto mp = (lp+rp)/2.0;
